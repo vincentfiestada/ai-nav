@@ -1,6 +1,7 @@
 #include "cardinal.h"
 #include "polygon.h"
 #include "queue.h"
+#include "stack.h"
 
 #define H 26
 #define W 40
@@ -13,6 +14,11 @@
 #define UNEXPLORED 5
 #define GOAL 6
 
+// Search strategies
+#define STRAT_BFS 1
+#define STRAT_DFS 2
+#define STRAT_ASTAR 3
+
 // Global variables
 int grid[H][W];
 polygon p;
@@ -23,6 +29,7 @@ coordinate teleport(coordinate current, coordinate target);
 void drawGrid();
 
 void BFS(Queue * fringe, coordinate current);
+void DFS(Stack * fringe, coordinate current);
 
 int main()
 {
@@ -103,38 +110,72 @@ int main()
     setTile(0, 0, CURRENT);
     setTile(39 ,0, GOAL);
 
-    // Create fringe queue
-    Queue * fringe = CreateNewQueue();
-
+    i = 0;
     drawGrid();
 
-    i = 0;
-    do
+    int strategy;
+    printf("\nChoose a Search Strategy\n1 - BFS\n2 - DFS\n3 - A* Search\n>>> Enter Choice: ");
+    scanf("%d", &strategy);
+
+    if (strategy == STRAT_BFS)
     {
-        // Check if we've found the goal
-        if (getTile(current.x, current.y) == GOAL)
+        // Create fringe queue
+        Queue * fringe = CreateNewQueue();
+        do
         {
-            break;
-        }
-        BFS(fringe, current);
-        // If fringe is nonempty, advance to next tile in the fringe queue
-        if (fringe->Head != NULL)
+            // Check if we've found the goal
+            if (getTile(current.x, current.y) == GOAL)
+            {
+                break;
+            }
+            BFS(fringe, current);
+            // If fringe is nonempty, advance to next tile in the fringe queue
+            if (fringe->Head != NULL)
+            {
+                coordinate target = Dequeue(fringe);
+                current = teleport(current, target);
+            }
+            i++;
+        } while(1);
+
+        /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+           CLEAN UP: Delete dynamically allocated objs
+          <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+        AnnihilateQueue(fringe);
+
+    }
+    else if (strategy == STRAT_DFS)
+    {
+        // Create fringe stack
+        Stack * fringe = CreateNewStack();
+        do
         {
-            coordinate target = Dequeue(fringe);
-            current = teleport(current, target);
-        }
-        i++;
-    } while(1);
+            // Check if we've found the goal
+            if (getTile(current.x, current.y) == GOAL)
+            {
+                break;
+            }
+            DFS(fringe, current);
+            // If fringe is not empty, move to next node in stack
+            if (fringe->Top != NULL)
+            {
+                coordinate target = PopFromStack(fringe);
+                current = teleport(current, target);
+            }
+            i++;
+        } while(1);
+
+        /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+           CLEAN UP: Delete dynamically allocated objs
+          <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+        AnnihilateStack(fringe);
+    }
 
     drawGrid();
     printf("\n--------------------------------------------------\n");
     printf("SUCCESS! Current Location is (%d, %d), which is a GOAL state. Took %d steps", current.x, current.y, i);
-
-    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-       CLEAN UP: Delete dynamically allocated objs
-      <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-
-    AnnihilateQueue(fringe);
 
     return 0;
 }
@@ -251,6 +292,52 @@ void BFS(Queue * fringe, coordinate current)
         if(getTile(current.x, current.y + 1) != GOAL) // GOAL Must supercede other QUEUED
         {
             setTile(current.x, current.y + 1, QUEUED);
+        }
+    }
+    return;
+}
+
+/*
+ * DFS() - "Depth-First": Push into the stack the DFS successors of the current coordinate
+ */
+void DFS(Stack * fringe, coordinate current)
+{
+    // Assume DFS relative order to be: Right, Left, Up, Down
+    // But then we have to push them into the stack in reverse order (i.e., Down, up, left, right)
+    // Check DOWN successor
+    if (current.y < H - 1 && getTile(current.x, current.y + 1) >= UNEXPLORED)
+    {
+        PushToStack(fringe, current.x, current.y + 1);
+        if(getTile(current.x, current.y + 1) != GOAL) // GOAL Must supercede other QUEUED
+        {
+            setTile(current.x, current.y + 1, QUEUED);
+        }
+    }
+    // Check UP (but remember, in our grid system, up means lower y)
+    if (current.y > 0 && getTile(current.x, current.y - 1) >= UNEXPLORED)
+    {
+        PushToStack(fringe, current.x, current.y - 1);
+        if(getTile(current.x, current.y - 1) != GOAL) // GOAL Must supercede other QUEUED
+        {
+            setTile(current.x, current.y - 1, QUEUED);
+        }
+    }
+    // Check LEFT
+    if (current.x > 0 && getTile(current.x - 1, current.y) >= UNEXPLORED)
+    {
+        PushToStack(fringe, current.x - 1, current.y);
+        if(getTile(current.x - 1, current.y) != GOAL) // GOAL Must supercede other QUEUED
+        {
+            setTile(current.x - 1, current.y, QUEUED);
+        }
+    }
+    // Check if RIGHT successor is viable
+    if (current.x < W - 1 && getTile(current.x + 1, current.y) >= UNEXPLORED)
+    {
+        PushToStack(fringe, current.x + 1, current.y);
+        if(getTile(current.x + 1, current.y) != GOAL) // GOAL Must supercede other QUEUED
+        {
+            setTile(current.x + 1, current.y, QUEUED);
         }
     }
     return;
