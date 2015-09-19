@@ -9,8 +9,9 @@
 #define BLOCKED 1
 #define CURRENT 2
 #define EXPLORED 3
-#define UNEXPLORED 4
-#define GOAL 5
+#define QUEUED 4
+#define UNEXPLORED 5
+#define GOAL 6
 
 // Global variables
 int grid[H][W];
@@ -107,22 +108,27 @@ int main()
 
     drawGrid();
 
-    int temp;
+    i = 0;
     do
     {
         // Check if we've found the goal
-        if (getTile(current.x, current.y) == GOAL) break;
-        scanf("%d", &temp);
+        if (getTile(current.x, current.y) == GOAL)
+        {
+            break;
+        }
         BFS(fringe, current);
-        drawGrid();
-        PrintQueue(fringe);
         // If fringe is nonempty, advance to next tile in the fringe queue
         if (fringe->Head != NULL)
         {
             coordinate target = Dequeue(fringe);
             current = teleport(current, target);
         }
-    } while(temp != 0);
+        i++;
+    } while(1);
+
+    drawGrid();
+    printf("\n--------------------------------------------------\n");
+    printf("SUCCESS! Current Location is (%d, %d), which is a GOAL state. Took %d steps", current.x, current.y, i);
 
     /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
        CLEAN UP: Delete dynamically allocated objs
@@ -186,13 +192,16 @@ void drawGrid()
                     printf("[X]");
                     break;
                 case EXPLORED:
-                    printf(" . ");
+                    printf(":::");
                     break;
                 case BLOCKED:
                     printf("!@!");
                     break;
                 case CURRENT:
                     printf("^0^");
+                    break;
+                case QUEUED:
+                    printf(" . ");
                     break;
                 default:
                     printf("   ");
@@ -212,21 +221,37 @@ void BFS(Queue * fringe, coordinate current)
     if (current.x < W - 1 && getTile(current.x + 1, current.y) >= UNEXPLORED)
     {
         Enqueue(fringe, current.x + 1, current.y);
+        if(getTile(current.x + 1, current.y) != GOAL) // GOAL Must supercede other QUEUED
+        {
+            setTile(current.x + 1, current.y, QUEUED);
+        }
     }
     // Check LEFT
     if (current.x > 0 && getTile(current.x - 1, current.y) >= UNEXPLORED)
     {
         Enqueue(fringe, current.x - 1, current.y);
+        if(getTile(current.x - 1, current.y) != GOAL) // GOAL Must supercede other QUEUED
+        {
+            setTile(current.x - 1, current.y, QUEUED);
+        }
     }
     // Check UP (but remember, in our grid system, up means lower y)
     if (current.y > 0 && getTile(current.x, current.y - 1) >= UNEXPLORED)
     {
         Enqueue(fringe, current.x, current.y - 1);
+        if(getTile(current.x, current.y - 1) != GOAL) // GOAL Must supercede other QUEUED
+        {
+            setTile(current.x, current.y - 1, QUEUED);
+        }
     }
     // Check DOWN
     if (current.y < H - 1 && getTile(current.x, current.y + 1) >= UNEXPLORED)
     {
         Enqueue(fringe, current.x, current.y + 1);
+        if(getTile(current.x, current.y + 1) != GOAL) // GOAL Must supercede other QUEUED
+        {
+            setTile(current.x, current.y + 1, QUEUED);
+        }
     }
     return;
 }
