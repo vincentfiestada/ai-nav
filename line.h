@@ -3,47 +3,50 @@
 
 typedef struct
 {
+    int x;
+    int y;
+} coordinate; // An x-y tuple
+
+typedef struct
+{
     float m; // slope of the line
     float b; // y-intercept of the line
-    int x1;
-    int x2;
-    int y1;
-    int y2;
+    coordinate one;
+    coordinate two;
 } line; // each line is represented by its slope-intercept equation
 
 /*
  * getSlope() - gets the slope of a line from two points on that line
  */
-float getSlope(int x1, int y1, int x2, int y2)
+float getSlope(coordinate a, coordinate b)
 {
-    return ((float)(y2-y1))/((float)(x2-x1));
+    return ((float)(b.y - a.y))/((float)(b.x - a.x));
 }
 
 /*
  * getYIntercept() - gets the y-intercept b of a line from a point and its slope
  */
-float getYIntercept(int x, int y, float m)
+float getYIntercept(coordinate a, float m)
 {
     //y = mx + b => b = y-mx
-    return (float)y-m*x;
+    return (float)a.y-m*a.x;
 }
 
 /*
  * inLine() - determines whether a point (x,y) is in a line l
  */
-bool inLine(int x, int y, line * l)
+bool inLine(coordinate a, line * l)
 {
     // (x,y) is in l if it satisfies the equation y = l.m*x + l.b
-    float tY = l->m * (float)x + l->b;
+    float tY = l->m * (float)a.x + l->b;
     // also check x = (y-l.b)/(l.m)
-    float tX = ((float)y - l->b)/l->m;
-    //printf("tY: %f\n floor(tY):%f\n ceil(tY):%f", tY, floor(tY), ceil(tY));
-    if (((float)y == floor(tY) || (float)y == ceil(tY)) || ((float)x == floor(tX) || (float)x == ceil(tX)))
+    float tX = ((float)a.y - l->b)/l->m;
+    if (((float)a.y == floor(tY) || (float)a.y == ceil(tY)) || ((float)a.x == floor(tX) || (float)a.x == ceil(tX)))
     //if (((float)y == floor(tY)) || ((float)x == floor(tX)))
     {
-        if ((l->x1 <= x && x <= l->x2) || (l->x2 <= x && x <= l->x1))
+        if ((l->one.x <= a.x && a.x <= l->two.x) || (l->two.x <= a.x && a.x <= l->one.x))
         {
-            if ((l->y1 <= y && y <= l->y2) || (l->y2 <= y && y <= l->y1))
+            if ((l->one.y <= a.y && a.y <= l->two.y) || (l->two.y <= a.y && a.y <= l->one.y))
             return true;
         }
     }

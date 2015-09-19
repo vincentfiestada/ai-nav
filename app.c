@@ -1,15 +1,22 @@
 #include "cardinal.h"
-#include "line.h"
+#include "polygon.h"
 
 #define H 40
 #define W 40
 
+// Tile states
 #define BLOCKED 1
 #define UNEXPLORED 2
 #define EXPLORED 3
+#define CURRENT 4
+#define GOAL 5
 
 // Global variables
 int grid[H][W];
+polygon p;
+
+void setTile(unsigned int x, unsigned int y, unsigned int s);
+void drawGrid();
 
 int main()
 {
@@ -21,7 +28,7 @@ int main()
     {
         for (j = 0; j < W; j++)
         {
-            grid[i][j] = BLOCKED;
+            grid[i][j] = UNEXPLORED;
         }
     }
 
@@ -38,27 +45,77 @@ int main()
     line e[3];
     for (i = 0; i < 3; i++)
     {
-        int nv[2]; // Get next vertex
+        coordinate nv; // Get next vertex
         if (i < 3 - 1)
         {
-            nv[0] = vertices[i+1][0];
-            nv[1] = vertices[i+1][1];
+            nv.x = vertices[i+1][0];
+            nv.y = vertices[i+1][1];
         }
         else
         {
-            nv[0] = vertices[0][0];
-            nv[1] = vertices[0][1];
+            nv.x = vertices[0][0];
+            nv.y = vertices[0][1];
         }
-        e[i].m = getSlope(vertices[i][0], vertices[i][1], nv[0], nv[1]);
-        e[i].b = getYIntercept(vertices[i][0], vertices[i][1], e[i].m);
-        e[i].x1 = vertices[i][0];
-        e[i].y1 = vertices[i][1];
-        e[i].x2 = nv[0];
-        e[i].y2 = nv[1];
+        coordinate c;
+        c.x = vertices[i][0];
+        c.y = vertices[i][1];
+        e[i].m = getSlope(c, nv);
+        e[i].b = getYIntercept(c, e[i].m);
+        e[i].one.x = vertices[i][0];
+        e[i].one.y = vertices[i][1];
+        e[i].two.x = nv.x;
+        e[i].two.y = nv.y;
     }
 
+    p.edges = e;
 
+    // Set blocked tiles
+    for (i = 0; i < H; i++)
+    {
+        printf("%2d ", i);
+        for (j = 0; j < W; j++)
+        {
+            for (k = 0; k < 3; k++)
+            {
+                coordinate c;
+                c.x = j;
+                c.y = i;
+                line e = p.edges[k];
+                if (inLine(c, &(e)))
+                {
+                    grid[i][j] = BLOCKED;
+                    break;
+                }
+            }
+        }
+        printf("\n");
+    }
+    // Set starting point and goal
+    coordinate current;
+    current.x = 0;
+    current.y = 0;
+    setTile(0, 0, CURRENT);
+    setTile(39 ,0, GOAL);
 
+    drawGrid();
+
+    return 0;
+}
+
+/*
+ * setTile() - Set coordinates (x,y) to status s
+ */
+void setTile(unsigned int x, unsigned int y, unsigned int s)
+{
+    grid[y][x] = s;
+}
+
+/*
+ * drawGrid() - draw the grid with coordinates (Recommended only for W = 40 on most resolutions)
+ */
+void drawGrid()
+{
+    unsigned int i, j, k;
     printf("    ");
     for (j = 0; j < W; j++) {
         printf("%2d ", j);
@@ -70,22 +127,24 @@ int main()
         printf("%2d ", i);
         for (j = 0; j < W; j++)
         {
-            for (k = 0; k < 3; k++)
+            switch(grid[i][j])
             {
-                if (inLine(j, i, &e[k]))
-                {
-                    grid[i][j] = BLOCKED;
+                case GOAL:
+                    printf("[X]");
+                    break;
+                case EXPLORED:
+                    printf(" . ");
+                    break;
+                case BLOCKED:
                     printf("!@!");
                     break;
-                }
-                else if (k == 3 - 1)
-                {
+                case CURRENT:
+                    printf(":) ");
+                    break;
+                default:
                     printf("   ");
-                }
             }
         }
         printf("\n");
     }
-
-    return 0;
 }
