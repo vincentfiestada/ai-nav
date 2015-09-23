@@ -18,14 +18,14 @@ typedef struct
 	StackNode * Top;
 } Stack;
 
-// Function declarations; see 'stack.c' for definitions
+
 Stack * CreateNewStack();
 void AnnihilateStack(Stack * targetStack);
 StackNode * PushToStack(Stack * targetStack, unsigned int x, unsigned int y);
 coordinate PopFromStack(Stack * targetStack);
 void StackUnderflow();
 void PrintStack(Stack * targetStack);
-
+unsigned int GetStackDepth(Stack * targetStack);
 // <summary>
 // CreateNewStack - allocates space for a new empty Stack and returns a pointer to that Stack
 //                - the pointer DOES NOT point to the top of the Stack
@@ -111,4 +111,19 @@ void PrintStack(Stack * targetStack)
 		node = node->Next;
 	}
 	return;
+}
+
+// <summary>
+// GetStackDepth - returns the depth or number of items in the stack
+// </summary>
+unsigned int GetStackDepth(Stack * targetStack)
+{
+	unsigned int depth = 0;
+	StackNode * node = targetStack->Top;
+	while (node != NULL)
+	{
+		depth++;
+		node = node->Next;
+	}
+	return depth;
 }

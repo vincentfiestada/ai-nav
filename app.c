@@ -116,7 +116,7 @@ int main()
     setTile(0, 0, CURRENT);
     setTile(39 ,0, GOAL);
 
-    i = 0;
+    i = 0; // keeps track of number of expanded nodes
     drawGrid();
 
     int strategy;
@@ -181,8 +181,11 @@ int main()
     }
 
     drawGrid();
-    printf("\n--------------------------------------------------\n");
-    printf("SUCCESS! Current Location is (%d, %d), which is a GOAL state. Took %d steps", current.x, current.y, i);
+    if (getTile(current.x, current.y) == GOAL)
+    {
+        printf("\n--------------------------------------------------\n");
+        printf("Current Location is (%d, %d), which is a GOAL state.", current.x, current.y);
+    }
     printf("\n\n");
     // Build the path by tracing back our footsteps
     Stack * path = CreateNewStack();
@@ -197,6 +200,9 @@ int main()
     }
     printf("Traced Path: ");
     PrintStack(path);
+    printf("\n\n*Includes initial and final positions.");
+    printf("\n\n----------------------------------------\nNumber of expanded nodes: %d", i);
+    printf("\nSolution cost: %d (Cost is 1 per step)", GetStackDepth(path) - 1);
 
     /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
        CLEAN UP: Delete dynamically allocated objs
