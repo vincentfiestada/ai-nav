@@ -21,10 +21,14 @@
 
 // Global variables
 int grid[H][W];
+coordinate pred[H][W]; // Used to keep track of the traversal
+//pred[i][j] = (x,y) means that (i,j) comes after (x,y) in our path
 polygon p;
 
 void setTile(unsigned int x, unsigned int y, unsigned int s);
 unsigned int getTile(unsigned int x, unsigned int y);
+void setPred(unsigned int x, unsigned int y, unsigned int px, unsigned int py);
+coordinate getPred(unsigned int x, unsigned int y);
 coordinate teleport(coordinate current, coordinate target);
 void drawGrid();
 
@@ -42,6 +46,8 @@ int main()
         for (j = 0; j < W; j++)
         {
             grid[i][j] = UNEXPLORED;
+            // Set all predecessors to (-1,-1) (i.e., not part of the discovered path)
+            setPred(j, i, -1, -1);
         }
     }
 
@@ -132,6 +138,7 @@ int main()
             // If fringe is nonempty, advance to next tile in the fringe queue
             if (fringe->Head != NULL)
             {
+                // We're gonna move from current to the target tile
                 coordinate target = Dequeue(fringe);
                 current = teleport(current, target);
             }
@@ -176,6 +183,26 @@ int main()
     drawGrid();
     printf("\n--------------------------------------------------\n");
     printf("SUCCESS! Current Location is (%d, %d), which is a GOAL state. Took %d steps", current.x, current.y, i);
+    printf("\n\n");
+    // Build the path by tracing back our footsteps
+    Stack * path = CreateNewStack();
+    // Push into the stack the final tile, which is the goal (also the current) tile
+    PushToStack(path, current.x, current.y);
+    while(1)
+    {
+        // Get predecessor of current top of stack
+        coordinate p = getPred(path->Top->Data.x, path->Top->Data.y);
+        if (p.x == -1 || p.y == -1) break;
+        PushToStack(path, p.x, p.y);
+    }
+    printf("Traced Path: ");
+    PrintStack(path);
+
+    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+       CLEAN UP: Delete dynamically allocated objs
+      <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+    AnnihilateStack(path);
 
     return 0;
 }
@@ -194,6 +221,24 @@ void setTile(unsigned int x, unsigned int y, unsigned int s)
 unsigned int getTile(unsigned int x, unsigned int y)
 {
     return grid[y][x];
+}
+
+/*
+ * setPred() - Set the tile visited before, i.e., predecessor to a tile with coordinates (x,y)
+ */
+void setPred(unsigned int x, unsigned int y, unsigned int px, unsigned int py)
+{
+    pred[y][x].x = px;
+    pred[y][x].y = py;
+}
+
+/*
+ * getPred() - Get the tile visited before, i.e., predecessor to a tile with coordinates (x,y)
+ *             Returns the coordinate
+ */
+coordinate getPred(unsigned int x, unsigned int y)
+{
+    return pred[y][x];
 }
 
 /*
@@ -266,6 +311,9 @@ void BFS(Queue * fringe, coordinate current)
         {
             setTile(current.x + 1, current.y, QUEUED);
         }
+        // We MIGHT move from current tile to this tile
+        // Set tile's predecessor to the current tile
+        setPred(current.x + 1, current.y, current.x, current.y);
     }
     // Check LEFT
     if (current.x > 0 && getTile(current.x - 1, current.y) >= UNEXPLORED)
@@ -275,6 +323,8 @@ void BFS(Queue * fringe, coordinate current)
         {
             setTile(current.x - 1, current.y, QUEUED);
         }
+        // Set tile's predecessor to the current tile
+        setPred(current.x - 1, current.y, current.x, current.y);
     }
     // Check UP (but remember, in our grid system, up means lower y)
     if (current.y > 0 && getTile(current.x, current.y - 1) >= UNEXPLORED)
@@ -284,6 +334,8 @@ void BFS(Queue * fringe, coordinate current)
         {
             setTile(current.x, current.y - 1, QUEUED);
         }
+        // Set tile's predecessor to the current tile
+        setPred(current.x, current.y - 1, current.x, current.y);
     }
     // Check DOWN
     if (current.y < H - 1 && getTile(current.x, current.y + 1) >= UNEXPLORED)
@@ -293,6 +345,8 @@ void BFS(Queue * fringe, coordinate current)
         {
             setTile(current.x, current.y + 1, QUEUED);
         }
+        // Set tile's predecessor to the current tile
+        setPred(current.x, current.y + 1, current.x, current.y);
     }
     return;
 }
@@ -312,6 +366,9 @@ void DFS(Stack * fringe, coordinate current)
         {
             setTile(current.x, current.y + 1, QUEUED);
         }
+        // We MIGHT move from current tile to this tile
+        // Set tile's predecessor to the current tile
+        setPred(current.x, current.y + 1, current.x, current.y);
     }
     // Check UP (but remember, in our grid system, up means lower y)
     if (current.y > 0 && getTile(current.x, current.y - 1) >= UNEXPLORED)
@@ -321,6 +378,8 @@ void DFS(Stack * fringe, coordinate current)
         {
             setTile(current.x, current.y - 1, QUEUED);
         }
+        // Set tile's predecessor to the current tile
+        setPred(current.x, current.y - 1, current.x, current.y);
     }
     // Check LEFT
     if (current.x > 0 && getTile(current.x - 1, current.y) >= UNEXPLORED)
@@ -330,6 +389,8 @@ void DFS(Stack * fringe, coordinate current)
         {
             setTile(current.x - 1, current.y, QUEUED);
         }
+        // Set tile's predecessor to the current tile
+        setPred(current.x - 1, current.y, current.x, current.y);
     }
     // Check if RIGHT successor is viable
     if (current.x < W - 1 && getTile(current.x + 1, current.y) >= UNEXPLORED)
@@ -339,6 +400,8 @@ void DFS(Stack * fringe, coordinate current)
         {
             setTile(current.x + 1, current.y, QUEUED);
         }
+        // Set tile's predecessor to the current tile
+        setPred(current.x + 1, current.y, current.x, current.y);
     }
     return;
 }
