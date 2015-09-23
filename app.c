@@ -2,6 +2,7 @@
 #include "polygon.h"
 #include "queue.h"
 #include "stack.h"
+#include <time.h> // clock_t, clock(), CLOCKS_PER_SEC
 
 #define H 26
 #define W 40
@@ -37,6 +38,7 @@ void DFS(Stack * fringe, coordinate current);
 
 int main()
 {
+    clock_t t = clock(); // For keeping track of running time
     // Declare iterators
     unsigned int i,j,k;
 
@@ -179,14 +181,6 @@ int main()
 
         AnnihilateStack(fringe);
     }
-
-    drawGrid();
-    if (getTile(current.x, current.y) == GOAL)
-    {
-        printf("\n--------------------------------------------------\n");
-        printf("Current Location is (%d, %d), which is a GOAL state.", current.x, current.y);
-    }
-    printf("\n\n");
     // Build the path by tracing back our footsteps
     Stack * path = CreateNewStack();
     // Push into the stack the final tile, which is the goal (also the current) tile
@@ -198,11 +192,18 @@ int main()
         if (p.x == -1 || p.y == -1) break;
         PushToStack(path, p.x, p.y);
     }
+    // Get number of clock ticks since last check to detection of final soln
+    t = clock() - t;
+    drawGrid();
+    printf("\n--------------------------------------------------\n");
+    printf("Current Location is (%d, %d), which is a GOAL state.", current.x, current.y);
+    printf("\n\n");
     printf("Traced Path: ");
     PrintStack(path);
     printf("\n\n*Includes initial and final positions.");
     printf("\n\n----------------------------------------\nNumber of expanded nodes: %d", i);
     printf("\nSolution cost: %d (Cost is 1 per step)", GetStackDepth(path) - 1);
+    printf("\nRunning time: %f s (since start of 'main' to finish of trace path)\n\n", ((float)t)/CLOCKS_PER_SEC);
 
     /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
        CLEAN UP: Delete dynamically allocated objs
