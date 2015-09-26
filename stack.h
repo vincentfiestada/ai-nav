@@ -16,6 +16,7 @@ typedef struct StackNode
 typedef struct
 {
 	StackNode * Top;
+	unsigned int Depth;
 } Stack;
 
 
@@ -25,7 +26,7 @@ StackNode * PushToStack(Stack * targetStack, unsigned int x, unsigned int y);
 coordinate PopFromStack(Stack * targetStack);
 void StackUnderflow();
 void PrintStack(Stack * targetStack);
-unsigned int GetStackDepth(Stack * targetStack);
+
 // <summary>
 // CreateNewStack - allocates space for a new empty Stack and returns a pointer to that Stack
 //                - the pointer DOES NOT point to the top of the Stack
@@ -36,6 +37,7 @@ Stack * CreateNewStack()
 {
 	Stack * thenewstack = malloc(sizeof(Stack));
 	thenewstack->Top = NULL; // Initialize Stack as empty
+	thenewstack->Depth = 0;
 	return thenewstack;
 }
 
@@ -66,6 +68,7 @@ StackNode * PushToStack(Stack * targetStack, unsigned int x, unsigned int y)
 	newNode->Data.y = y;
 	newNode->Next = targetStack->Top; // The new node points to the previous top and
 	targetStack->Top = newNode;      // becomes the new top
+	targetStack->Depth++; // Increment Depth
 }
 
 // <summary>
@@ -84,6 +87,7 @@ coordinate PopFromStack(Stack * targetStack)
 		targetStack->Top = node->Next;	 // Get Next node, which becomes the new top
 										// if Next == NULL, then the Stack is automatically empty
 		free(node);	// Free up memory
+		targetStack->Depth--; // Decrement depth
 		return data; // Return the 'salvaged Data'
 	}
 }
@@ -111,19 +115,4 @@ void PrintStack(Stack * targetStack)
 		node = node->Next;
 	}
 	return;
-}
-
-// <summary>
-// GetStackDepth - returns the depth or number of items in the stack
-// </summary>
-unsigned int GetStackDepth(Stack * targetStack)
-{
-	unsigned int depth = 0;
-	StackNode * node = targetStack->Top;
-	while (node != NULL)
-	{
-		depth++;
-		node = node->Next;
-	}
-	return depth;
 }

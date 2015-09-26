@@ -32,9 +32,10 @@ void setPred(unsigned int x, unsigned int y, unsigned int px, unsigned int py);
 coordinate getPred(unsigned int x, unsigned int y);
 coordinate teleport(coordinate current, coordinate target);
 void drawGrid();
-
+int absval(int x);
 void BFS(Queue * fringe, coordinate current);
 void DFS(Stack * fringe, coordinate current);
+int h(coordinate alpha, coordinate goal);
 
 int main()
 {
@@ -202,7 +203,7 @@ int main()
     PrintStack(path);
     printf("\n\n*Includes initial and final positions.");
     printf("\n\n----------------------------------------\nNumber of expanded nodes: %d", i);
-    printf("\nSolution cost: %d (Cost is 1 per step)", GetStackDepth(path) - 1);
+    printf("\nSolution cost: %d (Cost is 1 per step)", path->Depth - 1);
     printf("\nRunning time: %f s (since start of 'main' to finish of trace path)\n\n", ((float)t)/CLOCKS_PER_SEC);
 
     /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -411,4 +412,21 @@ void DFS(Stack * fringe, coordinate current)
         setPred(current.x + 1, current.y, current.x, current.y);
     }
     return;
+}
+
+/*
+ * absval() - Returns the absolute value of a function
+ */
+int absval(int x)
+{
+    return (x < 0) ? -1 * x : x;
+}
+
+/*
+ * h() - Returns the estimated distance of a point alpha to the goal
+ *                      - Uses the (optimistic) Manhattan distance as the heuristic
+ */
+int h(coordinate alpha, coordinate goal)
+{
+    return absval(goal.x - alpha.x) + absval(goal.y - alpha.y);
 }
