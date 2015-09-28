@@ -5,9 +5,9 @@
 #include "slist.h"
 #include <time.h> // clock_t, clock(), CLOCKS_PER_SEC
 
-#define H 40
-#define W 40
-#define DEBUG
+#define H 200
+#define W 400
+//#define DEBUG
 
 // Tile states
 #define BLOCKED 1
@@ -32,11 +32,14 @@
 int grid[H][W];
 coordinate pred[H][W]; // Used to keep track of the traversal
 //pred[i][j] = (x,y) means that (i,j) comes after (x,y) in our path
+int f_n[H][W]; // For A* search only - keeps track of f(n) values
 
 void setTile(unsigned int x, unsigned int y, unsigned int s);
 unsigned int getTile(unsigned int x, unsigned int y);
 void setPred(unsigned int x, unsigned int y, unsigned int px, unsigned int py);
 coordinate getPred(unsigned int x, unsigned int y);
+void setF(unsigned int x, unsigned int y, int f);
+int getF(unsigned int x, unsigned int y);
 coordinate teleport(coordinate current, coordinate target);
 void drawGrid();
 int absval(int x);
@@ -397,6 +400,22 @@ coordinate getPred(unsigned int x, unsigned int y)
 }
 
 /*
+ * setF() - Set the f(n) value of a point/tile
+ */
+void setF(unsigned int x, unsigned int y, int f)
+{
+    f_n[y][x] = f;
+}
+
+/*
+ * getF() - Get f(n) of a point/tile
+ */
+int getF(unsigned int x, unsigned int y)
+{
+    return f_n[y][x];
+}
+
+/*
  * teleport() - Move into the given coordinates (x,y)
  *  returns new current coordinate
  */
@@ -583,53 +602,100 @@ void Astar(SortedList * fringe, coordinate current, unsigned int g, coordinate g
 {
     // Order doesn't matter
     // Check if RIGHT successor is viable
-    if (current.x < W - 1 && getTile(current.x + 1, current.y) >= UNEXPLORED)
+    bool cont = true;
+    if (current.x < W - 1 && getTile(current.x + 1, current.y) >= QUEUED)
     {
         float f = g + h(current.x + 1, current.y, goal.x, goal.y);
-        InsertToSortedList(fringe, current.x + 1, current.y, f, g + 1);
-        if(getTile(current.x + 1, current.y) != GOAL) // GOAL Must supercede other QUEUED
+        if (getTile(current.x + 1, current.y) == QUEUED)
         {
-            setTile(current.x + 1, current.y, QUEUED);
+            // If queued, check to see if f from this current node is less than the stored f
+            // Find successor in List
+            if (getF(current.x + 1, current.y) <= f) cont = false;
         }
-        // We MIGHT move from current tile to this tile
-        // Set tile's predecessor to the current tile
-        setPred(current.x + 1, current.y, current.x, current.y);
+        if (cont)
+        {
+            InsertToSortedList(fringe, current.x + 1, current.y, f, g + 1);
+            setF(current.x + 1, current.y, f);
+            if(getTile(current.x + 1, current.y) != GOAL) // GOAL Must supercede other QUEUED
+            {
+                setTile(current.x + 1, current.y, QUEUED);
+            }
+            // We MIGHT move from current tile to this tile
+            // Set tile's predecessor to the current tile
+            setPred(current.x + 1, current.y, current.x, current.y);
+        }
     }
+    cont = true;
     // Check LEFT
-    if (current.x > 0 && getTile(current.x - 1, current.y) >= UNEXPLORED)
+    if (current.x > 0 && getTile(current.x - 1, current.y) >= QUEUED)
     {
-        int f = g + h(current.x - 1, current.y, goal.x, goal.y);
-        InsertToSortedList(fringe, current.x - 1, current.y, f, g + 1);
-        if(getTile(current.x - 1, current.y) != GOAL) // GOAL Must supercede other QUEUED
+        float f = g + h(current.x - 1, current.y, goal.x, goal.y);
+        if (getTile(current.x - 1, current.y) == QUEUED)
         {
-            setTile(current.x - 1, current.y, QUEUED);
+            // If queued, check to see if f from this current node is less than the stored f
+            // Find successor in List
+            if (getF(current.x - 1, current.y) <= f) cont = false;
         }
-        // Set tile's predecessor to the current tile
-        setPred(current.x - 1, current.y, current.x, current.y);
+        if (cont)
+        {
+            InsertToSortedList(fringe, current.x - 1, current.y, f, g + 1);
+            setF(current.x - 1, current.y, f);
+            if(getTile(current.x - 1, current.y) != GOAL) // GOAL Must supercede other QUEUED
+            {
+                setTile(current.x - 1, current.y, QUEUED);
+            }
+            // We MIGHT move from current tile to this tile
+            // Set tile's predecessor to the current tile
+            setPred(current.x - 1, current.y, current.x, current.y);
+        }
     }
+    cont = true;
     // Check UP (but remember, in our grid system, up means lower y)
-    if (current.y > 0 && getTile(current.x, current.y - 1) >= UNEXPLORED)
+    if (current.y > 0 && getTile(current.x, current.y - 1) >= QUEUED)
     {
-        int f = g + h(current.x, current.y - 1, goal.x, goal.y);
-        InsertToSortedList(fringe, current.x, current.y - 1, f, g + 1);
-        if(getTile(current.x, current.y - 1) != GOAL) // GOAL Must supercede other QUEUED
+        float f = g + h(current.x, current.y - 1, goal.x, goal.y);
+        if (getTile(current.x, current.y - 1) == QUEUED)
         {
-            setTile(current.x, current.y - 1, QUEUED);
+            // If queued, check to see if f from this current node is less than the stored f
+            // Find successor in List
+            if (getF(current.x, current.y - 1) <= f) cont = false;
         }
-        // Set tile's predecessor to the current tile
-        setPred(current.x, current.y - 1, current.x, current.y);
+        if (cont)
+        {
+            InsertToSortedList(fringe, current.x, current.y - 1, f, g + 1);
+            setF(current.x, current.y - 1, f);
+            if(getTile(current.x, current.y - 1) != GOAL) // GOAL Must supercede other QUEUED
+            {
+                setTile(current.x, current.y - 1, QUEUED);
+            }
+            // We MIGHT move from current tile to this tile
+            // Set tile's predecessor to the current tile
+            setPred(current.x, current.y - 1, current.x, current.y);
+        }
     }
     // Check DOWN
-    if (current.y < H - 1 && getTile(current.x, current.y + 1) >= UNEXPLORED)
+    cont = true;
+    if (current.y < H - 1 && getTile(current.x, current.y + 1) >= QUEUED)
     {
-        int f = g + h(current.x, current.y + 1, goal.x, goal.y);
-        InsertToSortedList(fringe, current.x, current.y + 1, f, g + 1);
-        if(getTile(current.x, current.y + 1) != GOAL) // GOAL Must supercede other QUEUED
+        float f = g + h(current.x, current.y + 1, goal.x, goal.y);
+        if (getTile(current.x, current.y + 1) == QUEUED)
         {
-            setTile(current.x, current.y + 1, QUEUED);
+            // If queued, check to see if f from this current node is less than the stored f
+            // Find successor in List
+            if (getF(current.x, current.y + 1) <= f) cont = false;
         }
-        // Set tile's predecessor to the current tile
-        setPred(current.x, current.y + 1, current.x, current.y);
+        if (cont)
+        {
+            InsertToSortedList(fringe, current.x, current.y + 1, f, g + 1);
+            setF(current.x, current.y + 1, f);
+            if(getTile(current.x, current.y + 1) != GOAL) // GOAL Must supercede other QUEUED
+            {
+                setTile(current.x, current.y + 1, QUEUED);
+            }
+            // We MIGHT move from current tile to this tile
+            // Set tile's predecessor to the current tile
+            setPred(current.x, current.y + 1, current.x, current.y);
+        }
     }
     return;
 }
