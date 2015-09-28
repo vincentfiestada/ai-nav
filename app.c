@@ -5,8 +5,8 @@
 #include "slist.h"
 #include <time.h> // clock_t, clock(), CLOCKS_PER_SEC
 
-#define H 26
-#define W 40
+#define H 200
+#define W 400
 
 // Tile states
 #define BLOCKED 1
@@ -41,6 +41,11 @@ void Astar(SortedList * fringe, coordinate current, unsigned int g, coordinate g
 
 int main()
 {
+    printf("\n=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+\n");
+	printf("    2D Path Finding w/ Search || CS 180 Machine Problem 1\n");
+	printf(" Vincent Paul F. Fiestada | 201369155 | vffiestada@up.edu.ph\n");
+	printf("=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+\n");
+
     // Declare iterators
     unsigned int i,j,k;
 
@@ -54,6 +59,8 @@ int main()
             setPred(j, i, -1, -1);
         }
     }
+
+    // Open and parse input file
 
     // Some sample vertices
     // Later, they should be read from an input file
@@ -116,7 +123,7 @@ int main()
     current.x = 0;
     current.y = 0;
     setTile(0, 0, CURRENT);
-    setTile(39 ,0, GOAL);
+    setTile(392 ,5, GOAL);
     coordinate goal;
     goal.x = 39;
     goal.y = 0;
