@@ -255,7 +255,7 @@ int main()
     printf("\n\n*Includes initial and final positions.");
     printf("\n\n----------------------------------------\nNumber of expanded nodes: %d", i);
     printf("\nSolution cost: %d (Cost is 1 per step)", path->Depth - 1);
-    printf("\nRunning time: %f s (since start of 'main' to finish of trace path)\n\n", ((float)t)/CLOCKS_PER_SEC);
+    printf("\nRunning time: %f s (for the search part only)\n\n", ((float)t)/CLOCKS_PER_SEC);
 
     /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
        CLEAN UP: Delete dynamically allocated objs
