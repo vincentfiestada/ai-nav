@@ -5,8 +5,9 @@
 #include "slist.h"
 #include <time.h> // clock_t, clock(), CLOCKS_PER_SEC
 
-#define H 200
-#define W 400
+#define H 40
+#define W 40
+#define DEBUG
 
 // Tile states
 #define BLOCKED 1
@@ -45,6 +46,9 @@ int main()
 	printf("    2D Path Finding w/ Search || CS 180 Machine Problem 1\n");
 	printf(" Vincent Paul F. Fiestada | 201369155 | vffiestada@up.edu.ph\n");
 	printf("=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+\n");
+    #ifdef DEBUG
+        printf("\n\n ------- DEBUG Mode ------\n\n");
+    #endif
 
     // Declare iterators
     unsigned int i,j,k;
@@ -123,10 +127,10 @@ int main()
     current.x = 0;
     current.y = 0;
     setTile(0, 0, CURRENT);
-    setTile(392 ,5, GOAL);
     coordinate goal;
     goal.x = 39;
-    goal.y = 0;
+    goal.y = 5;
+    setTile(goal.x, goal.y, GOAL);
 
     i = 0; // keeps track of number of expanded nodes
     #ifdef DEBUG
@@ -158,6 +162,7 @@ int main()
                 coordinate target = Dequeue(fringe);
                 current = teleport(current, target);
             }
+            else break;
             i++;
         } while(1);
 

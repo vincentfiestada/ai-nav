@@ -71,7 +71,7 @@ Node * InsertToSortedList(SortedList * targetList, unsigned int x, unsigned int 
 	Node * compared = targetList->Head;
 	while (compared != NULL)
 	{
-		if (compared->f >= newNode->f)
+		if (compared->f > newNode->f)
 		{
 			newNode->Next = compared->Next;
 			compared->Next = newNode;
