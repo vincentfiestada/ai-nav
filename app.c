@@ -5,9 +5,9 @@
 #include "slist.h"
 #include <time.h> // clock_t, clock(), CLOCKS_PER_SEC
 
-#define H 200
-#define W 400
-//#define DEBUG
+#define H 40
+#define W 40
+#define DEBUG
 
 // Tile states
 #define BLOCKED 1
@@ -16,6 +16,7 @@
 #define QUEUED 4
 #define UNEXPLORED 5
 #define GOAL 6
+#define INSIDE_PATH 7
 
 // Search strategies
 #define STRAT_BFS 1
@@ -165,6 +166,9 @@ int main()
         printf("\n");
     }
 
+    // Close input file
+    fclose(inputFile);
+
     i = 0; // keeps track of number of expanded nodes
     #ifdef DEBUG
         drawGrid();
@@ -188,6 +192,7 @@ int main()
                 break;
             }
             BFS(fringe, current);
+            i++; // Expanded 1 more node
             // If fringe is nonempty, advance to next tile in the fringe queue
             if (fringe->Head != NULL)
             {
@@ -200,7 +205,6 @@ int main()
                 printf("\n\n <!> No solution path found.");
                 break;
             }
-            i++;
         } while(1);
 
         /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -222,6 +226,7 @@ int main()
                 break;
             }
             DFS(fringe, current);
+            i++;
             // If fringe is not empty, move to next node in stack
             if (fringe->Top != NULL)
             {
@@ -233,7 +238,6 @@ int main()
                 printf("\n\n <!> No solution path found.");
                 break;
             }
-            i++;
         } while(1);
 
         /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -256,7 +260,19 @@ int main()
             // Get A* search successors (automagically sorted)
             // i = current level - 1 = g(n)
             Astar(fringe, current, i, goal);
+            i++; // Succeeding nodes to be expanded would be one level below
             // If fringe is nonempty, advance to next tile in the fringe
+
+            #ifdef DEBUG
+                Node * n = fringe->Head;
+                printf("\n\n$ Fringe: ");
+                while(n != NULL)
+                {
+                    printf("(%d %d) ", n->Data.x, n->Data.y);
+                    n = n->Next;
+                }
+            #endif
+
             if (fringe->Head != NULL)
             {
                 // We're gonna move from current to the target tile
@@ -268,7 +284,6 @@ int main()
                 printf("\n\n <!> No solution path found.");
                 break;
             }
-            i++;
         } while(1);
 
         /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -312,6 +327,27 @@ int main()
     }
     PrintStack(path);
     printf("\n\n*Includes initial and final positions.");
+    #ifdef DEBUG
+        // >>>>>>>>> Draw path <<<<<<<<<<
+        // First, clear the grid
+        for (i = 0; i < H; i++)
+        {
+            for (j = 0; j < W; j++)
+            {
+                if (grid[i][j] != BLOCKED)
+                grid[i][j] = UNEXPLORED;
+            }
+        }
+        // Now, mark each point in the solution path
+        StackNode * n = path->Top;
+        while(n != NULL)
+        {
+            setTile(n->Data.x, n->Data.y, INSIDE_PATH);
+            n = n->Next;
+        }
+        // Finally, redraw the grid
+        drawGrid();
+    #endif
     printf("\n\n----------------------------------------\nNumber of expanded nodes: %d", i);
     printf("\nSolution cost: %d (Cost is 1 per step)", path->Depth - 1);
     printf("\nRunning time: %f s (for the search part only)\n\n", ((float)t)/CLOCKS_PER_SEC);
@@ -387,22 +423,25 @@ void drawGrid()
             switch(grid[i][j])
             {
                 case GOAL:
-                    printf("[X]");
+                    printf("X");
                     break;
                 case EXPLORED:
-                    printf(":::");
+                    printf(":");
                     break;
                 case BLOCKED:
-                    printf("!@!");
+                    printf("@");
                     break;
                 case CURRENT:
-                    printf("^0^");
+                    printf("^");
                     break;
                 case QUEUED:
-                    printf(" . ");
+                    printf(".");
+                    break;
+                case INSIDE_PATH:
+                    printf("+");
                     break;
                 default:
-                    printf("   ");
+                    printf(" ");
             }
         }
         printf("\n");
@@ -545,7 +584,7 @@ void Astar(SortedList * fringe, coordinate current, unsigned int g, coordinate g
     // Check if RIGHT successor is viable
     if (current.x < W - 1 && getTile(current.x + 1, current.y) >= UNEXPLORED)
     {
-        int f = g + h(current.x + 1, current.y, goal.x, goal.y);
+        float f = g + h(current.x + 1, current.y, goal.x, goal.y);
         InsertToSortedList(fringe, current.x + 1, current.y, f);
         if(getTile(current.x + 1, current.y) != GOAL) // GOAL Must supercede other QUEUED
         {

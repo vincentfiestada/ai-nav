@@ -18,6 +18,7 @@ typedef struct Node
 typedef struct
 {
 	Node * Head;
+	Node * Tail;
 } SortedList;
 
 
@@ -37,6 +38,7 @@ SortedList * CreateNewSortedList()
 	SortedList * n = malloc(sizeof(SortedList));
 	// Initialize as empty
 	n->Head = NULL;
+	n->Tail = NULL;
 	return n;
 }
 
@@ -68,22 +70,43 @@ Node * InsertToSortedList(SortedList * targetList, unsigned int x, unsigned int 
 	newNode->Prev = NULL;
 	newNode->Next = NULL;
 	// find where to insert (look for a node with larger f)
-	Node * compared = targetList->Head;
-	while (compared != NULL)
-	{
-		if (compared->f > newNode->f)
-		{
-			newNode->Next = compared->Next;
-			compared->Next = newNode;
-			break;
-		}
-		compared = compared->Next;
-	}
-	newNode->Prev = compared;
 	if (targetList->Head == NULL)
 	{
+		// List is empty
 		targetList->Head = newNode;
+		targetList->Tail = newNode;
 	}
+	else
+	{
+		// Perform insertion sort
+		Node * compared = targetList->Head;
+		while (compared != NULL && newNode->f > compared->f) // Find which node to insert newNode before
+		{
+			compared = compared->Next;
+		}
+		if (compared != NULL) // Insert newNode before the node compared
+		{
+			newNode->Next = compared;
+			newNode->Prev = compared->Prev;
+			if (newNode->Prev != NULL)
+			{
+				newNode->Prev->Next = newNode;
+			}
+			else
+			{
+				targetList->Head = newNode;
+			}
+			compared->Prev = newNode;
+		}
+		else
+		{
+			// insert into end of list
+			newNode->Prev = targetList->Tail;
+			targetList->Tail->Next = newNode;
+			targetList->Tail = newNode;
+		}
+	}
+
 	return newNode;
 }
 
@@ -103,6 +126,10 @@ coordinate PopFromSortedList(SortedList * targetList)
 		// f(n) is discarded
 		targetList->Head = node->Next;	 // Get Next node, which becomes the new head
 										// if Next == NULL, then the list is automatically empty
+		if (targetList->Head != NULL)
+		{
+			targetList->Head->Prev = NULL;
+		}
 		free(node);	// Free up memory
 		return data; // Return the 'salvaged Data'
 	}
