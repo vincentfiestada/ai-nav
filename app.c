@@ -2,6 +2,7 @@
 #include "polygon.h"
 #include "queue.h"
 #include "stack.h"
+#include "slist.h"
 #include <time.h> // clock_t, clock(), CLOCKS_PER_SEC
 
 #define H 26
@@ -35,7 +36,8 @@ void drawGrid();
 int absval(int x);
 void BFS(Queue * fringe, coordinate current);
 void DFS(Stack * fringe, coordinate current);
-int h(coordinate alpha, coordinate goal);
+int h(unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2);
+void Astar(SortedList * fringe, coordinate current, unsigned int g, coordinate goal);
 
 int main()
 {
@@ -118,12 +120,15 @@ int main()
     current.y = 0;
     setTile(0, 0, CURRENT);
     setTile(39 ,0, GOAL);
+    coordinate goal;
+    goal.x = 39;
+    goal.y = 0;
 
     i = 0; // keeps track of number of expanded nodes
     drawGrid();
 
     int strategy;
-    printf("\nChoose a Search Strategy\n1 - BFS\n2 - DFS\n3 - A* Search\n>>> Enter Choice: ");
+    printf("\nChoose a Search Strategy\n1 - BFS\n2 - DFS\nOther - A* Search\n>>> Enter Choice: ");
     scanf("%d", &strategy);
 
     if (strategy == STRAT_BFS)
@@ -182,6 +187,37 @@ int main()
 
         AnnihilateStack(fringe);
     }
+    else // Use A* as default strategy
+    {
+        // Create fringe sorted doubly linked list
+        SortedList * fringe = CreateNewSortedList();
+        do
+        {
+            // Check if we've found the goal
+            if (getTile(current.x, current.y) == GOAL)
+            {
+                break;
+            }
+            // Get A* search successors (automagically sorted)
+            // i = current level - 1 = g(n)
+            Astar(fringe, current, i, goal);
+            // If fringe is nonempty, advance to next tile in the fringe
+            if (fringe->Head != NULL)
+            {
+                // We're gonna move from current to the target tile
+                coordinate target = PopFromSortedList(fringe);
+                current = teleport(current, target);
+            }
+            i++;
+        } while(1);
+
+        /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+           CLEAN UP: Delete dynamically allocated objs
+          <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+        AnnihilateSortedList(fringe);
+
+    }
     // Build the path by tracing back our footsteps
     Stack * path = CreateNewStack();
     // Push into the stack the final tile, which is the goal (also the current) tile
@@ -197,9 +233,21 @@ int main()
     t = clock() - t;
     drawGrid();
     printf("\n--------------------------------------------------\n");
-    printf("Current Location is (%d, %d), which is a GOAL state.", current.x, current.y);
+    printf("Current Location is (%d, %d)", current.x, current.y);
+    if (getTile(current.x, current.y) == GOAL) printf(" which is a GOAL point.");
     printf("\n\n");
-    printf("Traced Path: ");
+    printf("Traced Path ");
+    switch(strategy)
+    {
+        case STRAT_BFS:
+            printf("(BFS): ");
+            break;
+        case STRAT_DFS:
+            printf("(DFS): ");
+            break;
+        default:
+            printf("(A*): ");
+    }
     PrintStack(path);
     printf("\n\n*Includes initial and final positions.");
     printf("\n\n----------------------------------------\nNumber of expanded nodes: %d", i);
@@ -426,7 +474,66 @@ int absval(int x)
  * h() - Returns the estimated distance of a point alpha to the goal
  *                      - Uses the (optimistic) Manhattan distance as the heuristic
  */
-int h(coordinate alpha, coordinate goal)
+int h(unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2)
 {
-    return absval(goal.x - alpha.x) + absval(goal.y - alpha.y);
+    return absval(x2 - x1) + absval(y2 - y1);
+}
+
+/*
+ * Astar() - "A* Search": Enqueue the A* successors of the current coordinate (sorted upon insertion)
+ *         - arguments: fringe (SortedList) to insert successors into, current position of robot, and g(n) or the current *           level - 1, goal (coordinate), which is needed to compute h(n)
+ */
+void Astar(SortedList * fringe, coordinate current, unsigned int g, coordinate goal)
+{
+    // Order doesn't matter
+    // Check if RIGHT successor is viable
+    if (current.x < W - 1 && getTile(current.x + 1, current.y) >= UNEXPLORED)
+    {
+        int f = g + h(current.x + 1, current.y, goal.x, goal.y);
+        InsertToSortedList(fringe, current.x + 1, current.y, f);
+        if(getTile(current.x + 1, current.y) != GOAL) // GOAL Must supercede other QUEUED
+        {
+            setTile(current.x + 1, current.y, QUEUED);
+        }
+        // We MIGHT move from current tile to this tile
+        // Set tile's predecessor to the current tile
+        setPred(current.x + 1, current.y, current.x, current.y);
+    }
+    // Check LEFT
+    if (current.x > 0 && getTile(current.x - 1, current.y) >= UNEXPLORED)
+    {
+        int f = g + h(current.x - 1, current.y, goal.x, goal.y);
+        InsertToSortedList(fringe, current.x - 1, current.y, f);
+        if(getTile(current.x - 1, current.y) != GOAL) // GOAL Must supercede other QUEUED
+        {
+            setTile(current.x - 1, current.y, QUEUED);
+        }
+        // Set tile's predecessor to the current tile
+        setPred(current.x - 1, current.y, current.x, current.y);
+    }
+    // Check UP (but remember, in our grid system, up means lower y)
+    if (current.y > 0 && getTile(current.x, current.y - 1) >= UNEXPLORED)
+    {
+        int f = g + h(current.x, current.y - 1, goal.x, goal.y);
+        InsertToSortedList(fringe, current.x, current.y - 1, f);
+        if(getTile(current.x, current.y - 1) != GOAL) // GOAL Must supercede other QUEUED
+        {
+            setTile(current.x, current.y - 1, QUEUED);
+        }
+        // Set tile's predecessor to the current tile
+        setPred(current.x, current.y - 1, current.x, current.y);
+    }
+    // Check DOWN
+    if (current.y < H - 1 && getTile(current.x, current.y + 1) >= UNEXPLORED)
+    {
+        int f = g + h(current.x, current.y + 1, goal.x, goal.y);
+        InsertToSortedList(fringe, current.x, current.y + 1, f);
+        if(getTile(current.x, current.y + 1) != GOAL) // GOAL Must supercede other QUEUED
+        {
+            setTile(current.x, current.y + 1, QUEUED);
+        }
+        // Set tile's predecessor to the current tile
+        setPred(current.x, current.y + 1, current.x, current.y);
+    }
+    return;
 }
