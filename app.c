@@ -169,7 +169,6 @@ int main()
     // Close input file
     fclose(inputFile);
 
-    i = 0; // keeps track of number of expanded nodes
     #ifdef DEBUG
         drawGrid();
     #endif
@@ -179,6 +178,7 @@ int main()
     scanf("%d", &strategy);
 
     printf("\nStarting Search...\n");
+    int expanded_count = 0; // Count expanded nodes
     clock_t t = clock(); // For keeping track of running time
     if (strategy == STRAT_BFS)
     {
@@ -192,7 +192,7 @@ int main()
                 break;
             }
             BFS(fringe, current);
-            i++; // Expanded 1 more node
+            expanded_count++; // Expanded 1 more node
             // If fringe is nonempty, advance to next tile in the fringe queue
             if (fringe->Head != NULL)
             {
@@ -226,7 +226,7 @@ int main()
                 break;
             }
             DFS(fringe, current);
-            i++;
+            expanded_count++; // Expanded 1 more node
             // If fringe is not empty, move to next node in stack
             if (fringe->Top != NULL)
             {
@@ -260,9 +260,8 @@ int main()
             // Get A* search successors (automagically sorted)
             // i = current level - 1 = g(n)
             Astar(fringe, current, i, goal);
-            i++; // Succeeding nodes to be expanded would be one level below
+            expanded_count++;
             // If fringe is nonempty, advance to next tile in the fringe
-
             #ifdef DEBUG
                 Node * n = fringe->Head;
                 printf("\n\n$ Fringe: ");
@@ -276,6 +275,8 @@ int main()
             if (fringe->Head != NULL)
             {
                 // We're gonna move from current to the target tile
+                // Get new level (pop will discard everything except the coordinates)
+                i = fringe->Head->g;
                 coordinate target = PopFromSortedList(fringe);
                 current = teleport(current, target);
             }
@@ -348,7 +349,7 @@ int main()
         // Finally, redraw the grid
         drawGrid();
     #endif
-    printf("\n\n----------------------------------------\nNumber of expanded nodes: %d", i);
+    printf("\n\n----------------------------------------\nNumber of expanded nodes: %d", expanded_count);
     printf("\nSolution cost: %d (Cost is 1 per step)", path->Depth - 1);
     printf("\nRunning time: %f s (for the search part only)\n\n", ((float)t)/CLOCKS_PER_SEC);
 
@@ -585,7 +586,7 @@ void Astar(SortedList * fringe, coordinate current, unsigned int g, coordinate g
     if (current.x < W - 1 && getTile(current.x + 1, current.y) >= UNEXPLORED)
     {
         float f = g + h(current.x + 1, current.y, goal.x, goal.y);
-        InsertToSortedList(fringe, current.x + 1, current.y, f);
+        InsertToSortedList(fringe, current.x + 1, current.y, f, g + 1);
         if(getTile(current.x + 1, current.y) != GOAL) // GOAL Must supercede other QUEUED
         {
             setTile(current.x + 1, current.y, QUEUED);
@@ -598,7 +599,7 @@ void Astar(SortedList * fringe, coordinate current, unsigned int g, coordinate g
     if (current.x > 0 && getTile(current.x - 1, current.y) >= UNEXPLORED)
     {
         int f = g + h(current.x - 1, current.y, goal.x, goal.y);
-        InsertToSortedList(fringe, current.x - 1, current.y, f);
+        InsertToSortedList(fringe, current.x - 1, current.y, f, g + 1);
         if(getTile(current.x - 1, current.y) != GOAL) // GOAL Must supercede other QUEUED
         {
             setTile(current.x - 1, current.y, QUEUED);
@@ -610,7 +611,7 @@ void Astar(SortedList * fringe, coordinate current, unsigned int g, coordinate g
     if (current.y > 0 && getTile(current.x, current.y - 1) >= UNEXPLORED)
     {
         int f = g + h(current.x, current.y - 1, goal.x, goal.y);
-        InsertToSortedList(fringe, current.x, current.y - 1, f);
+        InsertToSortedList(fringe, current.x, current.y - 1, f, g + 1);
         if(getTile(current.x, current.y - 1) != GOAL) // GOAL Must supercede other QUEUED
         {
             setTile(current.x, current.y - 1, QUEUED);
@@ -622,7 +623,7 @@ void Astar(SortedList * fringe, coordinate current, unsigned int g, coordinate g
     if (current.y < H - 1 && getTile(current.x, current.y + 1) >= UNEXPLORED)
     {
         int f = g + h(current.x, current.y + 1, goal.x, goal.y);
-        InsertToSortedList(fringe, current.x, current.y + 1, f);
+        InsertToSortedList(fringe, current.x, current.y + 1, f, g + 1);
         if(getTile(current.x, current.y + 1) != GOAL) // GOAL Must supercede other QUEUED
         {
             setTile(current.x, current.y + 1, QUEUED);

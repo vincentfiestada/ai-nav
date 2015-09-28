@@ -10,6 +10,7 @@
 typedef struct Node
 {
 	int f; // evaluated node cost
+	int g; // level of this node in the search tree
 	coordinate Data;
 	struct Node * Prev;
 	struct Node * Next;
@@ -24,7 +25,7 @@ typedef struct
 
 SortedList * CreateNewSortedList();
 void AnnihilateSortedList(SortedList * targetList);
-Node * InsertToSortedList(SortedList * targetList, unsigned int x, unsigned int y, int f);
+Node * InsertToSortedList(SortedList * targetList, unsigned int x, unsigned int y, int f, int g);
 coordinate PopFromSortedList(SortedList * targetList);
 void SortedListUnderflow();
 
@@ -61,12 +62,13 @@ void AnnihilateSortedList(SortedList * targetList)
 // <summary>
 // InsertToSortedList - inserts a new Node into a Sorted List
 // </summary>
-Node * InsertToSortedList(SortedList * targetList, unsigned int x, unsigned int y, int f)
+Node * InsertToSortedList(SortedList * targetList, unsigned int x, unsigned int y, int f, int g)
 {
 	Node * newNode = malloc(sizeof(Node)); // request space for new node
 	newNode->Data.x = x;
 	newNode->Data.y = y;
 	newNode->f = f;
+	newNode->g = g;
 	newNode->Prev = NULL;
 	newNode->Next = NULL;
 	// find where to insert (look for a node with larger f)
