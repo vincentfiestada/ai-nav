@@ -41,7 +41,6 @@ void Astar(SortedList * fringe, coordinate current, unsigned int g, coordinate g
 
 int main()
 {
-    clock_t t = clock(); // For keeping track of running time
     // Declare iterators
     unsigned int i,j,k;
 
@@ -96,7 +95,6 @@ int main()
     // Set blocked tiles
     for (i = 0; i < H; i++)
     {
-        printf("%2d ", i);
         for (j = 0; j < W; j++)
         {
             for (k = 0; k < 3; k++)
@@ -112,7 +110,6 @@ int main()
                 }
             }
         }
-        printf("\n");
     }
     // Set starting point and goal
     coordinate current;
@@ -125,11 +122,15 @@ int main()
     goal.y = 0;
 
     i = 0; // keeps track of number of expanded nodes
-    drawGrid();
+    #ifdef DEBUG
+        drawGrid();
+    #endif
 
     int strategy;
     printf("\nChoose a Search Strategy\n1 - BFS\n2 - DFS\nOther - A* Search\n>>> Enter Choice: ");
     scanf("%d", &strategy);
+
+    clock_t t = clock(); // For keeping track of running time
 
     if (strategy == STRAT_BFS)
     {
@@ -231,7 +232,9 @@ int main()
     }
     // Get number of clock ticks since last check to detection of final soln
     t = clock() - t;
-    drawGrid();
+    #ifdef DEBUG
+        drawGrid();
+    #endif
     printf("\n--------------------------------------------------\n");
     printf("Current Location is (%d, %d)", current.x, current.y);
     if (getTile(current.x, current.y) == GOAL) printf(" which is a GOAL point.");
